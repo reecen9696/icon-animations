@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Icon set</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+  <style>
+    :root {
+      --bg: #000000;
+      --text: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    header {
+      padding: 32px 40px 8px;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 500;
+      margin: 0;
+      color: var(--text);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      padding: 24px 40px 60px;
+    }
+    .tile {
+      padding: 18px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .icons {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .icon-16 { width: 16px; height: 16px; display: block; }
+    .icon-24 { width: 24px; height: 24px; display: block; }
+    .label {
+      font-size: 12px;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+  </style>
+</head>
+<body>
+  <header><h1>Icons</h1></header>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    // Add new icons by dropping <name>.json into this folder and adding the name here.
+    // Entries can be a string (file + label match) or { label, file } to reuse a JSON under a different name.
+    const ICONS = [
+      "baccarat",
+      "blackjack",
+      "blitz",
+      "diamonds",
+      "dice",
+      { label: "advanced dice", file: "dice" },
+      "keno",
+      "mines",
+      "roulette",
+    ];
+
+    const grid = document.getElementById("grid");
+
+    for (const entry of ICONS) {
+      const label_text = typeof entry === "string" ? entry : entry.label;
+      const file = typeof entry === "string" ? entry : entry.file;
+      const tile = document.createElement("div");
+      tile.className = "tile";
+
+      const icons = document.createElement("div");
+      icons.className = "icons";
+
+      const mount16 = document.createElement("div");
+      mount16.className = "icon-16";
+
+      const mount24 = document.createElement("div");
+      mount24.className = "icon-24";
+
+      icons.append(mount16, mount24);
+
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = label_text;
+
+      tile.append(icons, label);
+      grid.append(tile);
+
+      const anims = [mount16, mount24].map((mount) => {
+        const anim = lottie.loadAnimation({
+          container: mount,
+          renderer: "svg",
+          loop: true,
+          autoplay: false,
+          path: `${file}.json`,
+        });
+        anim.addEventListener("DOMLoaded", () => anim.goToAndStop(0, true));
+        anim.addEventListener("loopComplete", () => {
+          if (anim._finishOnLoop) {
+            anim._finishOnLoop = false;
+            anim.loop = true;
+            anim.goToAndStop(0, true);
+          }
+        });
+        return anim;
+      });
+
+      tile.addEventListener("mouseenter", () => {
+        anims.forEach((a) => {
+          a._finishOnLoop = false;
+          a.loop = true;
+          a.play();
+        });
+      });
+      tile.addEventListener("mouseleave", () => {
+        anims.forEach((a) => {
+          a._finishOnLoop = true;
+          a.loop = false;
+        });
+      });
+    }
+  </script>
+</body>
+</html>
