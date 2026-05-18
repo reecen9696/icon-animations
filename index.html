@@ -59,26 +59,37 @@
 </head>
 <body>
   <header><h1>Icons</h1></header>
-  <div class="grid" id="grid"></div>
+  <div class="grid" id="grid-main"></div>
+  <header><h1>Work in progress</h1></header>
+  <div class="grid" id="grid-wip"></div>
 
   <script>
-    // Add new icons by dropping <name>.json into this folder and adding the name here.
+    // Add new icons by dropping <name>.json into this folder and adding it to a section below.
     // Entries can be a string (file + label match) or { label, file } to reuse a JSON under a different name.
-    const ICONS = [
-      "baccarat",
-      "blackjack",
-      "blitz",
-      "diamonds",
-      "dice",
-      { label: "advanced dice", file: "dice" },
-      "keno",
-      "mines",
-      "roulette",
-    ];
+    const SECTIONS = {
+      "grid-main": [
+        "baccarat",
+        "blackjack",
+        "blitz",
+        "diamonds",
+        "dice",
+        { label: "advanced dice", file: "dice" },
+        "keno",
+        "mines",
+      ],
+      "grid-wip": [
+        "wheel",
+        "roulette",
+        "plinko",
+        "limbo",
+      ],
+    };
 
-    const grid = document.getElementById("grid");
+    const all_entries = Object.entries(SECTIONS).flatMap(([id, items]) =>
+      items.map((entry) => [document.getElementById(id), entry])
+    );
 
-    for (const entry of ICONS) {
+    for (const [grid, entry] of all_entries) {
       const label_text = typeof entry === "string" ? entry : entry.label;
       const file = typeof entry === "string" ? entry : entry.file;
       const tile = document.createElement("div");
