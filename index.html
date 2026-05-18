@@ -58,6 +58,8 @@
   </style>
 </head>
 <body>
+  <header><h1>Good</h1></header>
+  <div class="grid" id="grid-good"></div>
   <header><h1>Icons</h1></header>
   <div class="grid" id="grid-main"></div>
   <header><h1>Work in progress</h1></header>
@@ -67,17 +69,19 @@
     // Add new icons by dropping <name>.json into this folder and adding it to a section below.
     // Entries can be a string (file + label match) or { label, file } to reuse a JSON under a different name.
     const SECTIONS = {
-      "grid-main": [
-        "baccarat",
-        "blackjack",
+      "grid-good": [
+        "roulette",
+        "wheel",
         "blitz",
         "diamonds",
+        "baccarat",
+      ],
+      "grid-main": [
+        "blackjack",
         "dice",
         { label: "advanced dice", file: "dice" },
         "keno",
         "mines",
-        "roulette",
-        "wheel",
       ],
       "grid-wip": [
         "plinko",
