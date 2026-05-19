@@ -75,13 +75,13 @@
         "blitz",
         "diamonds",
         "baccarat",
+        "mines",
       ],
       "grid-main": [
         "blackjack",
         "dice",
         { label: "advanced dice", file: "dice" },
         "keno",
-        "mines",
       ],
       "grid-wip": [
         "plinko",
@@ -126,27 +126,26 @@
           path: `${file}.json`,
         });
         anim.addEventListener("DOMLoaded", () => anim.goToAndStop(0, true));
-        anim.addEventListener("loopComplete", () => {
+        const maybeReset = () => {
           if (anim._finishOnLoop) {
             anim._finishOnLoop = false;
-            anim.loop = true;
             anim.goToAndStop(0, true);
           }
-        });
+        };
+        anim.addEventListener("loopComplete", maybeReset);
+        anim.addEventListener("complete", maybeReset);
         return anim;
       });
 
       tile.addEventListener("mouseenter", () => {
         anims.forEach((a) => {
           a._finishOnLoop = false;
-          a.loop = true;
           a.play();
         });
       });
       tile.addEventListener("mouseleave", () => {
         anims.forEach((a) => {
           a._finishOnLoop = true;
-          a.loop = false;
         });
       });
     }
