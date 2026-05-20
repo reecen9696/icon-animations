@@ -48,8 +48,28 @@
       align-items: center;
       gap: 16px;
     }
-    .icon-16 { width: 16px; height: 16px; display: block; }
-    .icon-24 { width: 24px; height: 24px; display: block; }
+    .icon-16 { width: 16px; height: 16px; display: block; position: relative; }
+    .icon-24 { width: 24px; height: 24px; display: block; position: relative; }
+    .lottie-mount { position: absolute; inset: 0; z-index: 1; }
+    .behind {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .behind > * {
+      width: 100%;
+      height: 100%;
+      display: block;
+      transform: scale(0);
+      transform-origin: center;
+      transition: transform 1000ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .behind.show > * {
+      transform: scale(1);
+      transition: transform 850ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .icon-16 > svg, .icon-24 > svg { position: relative; z-index: 1; }
     .label {
       font-size: 12px;
       color: var(--text);
@@ -70,6 +90,7 @@
     // Entries can be a string (file + label match) or { label, file } to reuse a JSON under a different name.
     const SECTIONS = {
       "grid-good": [
+        { file: "fire", loop_file: "fireloop", behind: "4.svg" },
         "roulette",
         "wheel",
         "blitz",
@@ -102,13 +123,34 @@
       const icons = document.createElement("div");
       icons.className = "icons";
 
+      const wrap16 = document.createElement("div");
+      wrap16.className = "icon-16";
       const mount16 = document.createElement("div");
-      mount16.className = "icon-16";
+      mount16.className = "lottie-mount";
+      wrap16.append(mount16);
 
+      const wrap24 = document.createElement("div");
+      wrap24.className = "icon-24";
       const mount24 = document.createElement("div");
-      mount24.className = "icon-24";
+      mount24.className = "lottie-mount";
+      wrap24.append(mount24);
 
-      icons.append(mount16, mount24);
+      const behind = typeof entry === "object" ? entry.behind : null;
+      const behind_els = [];
+      if (behind) {
+        for (const wrap of [wrap16, wrap24]) {
+          const b = document.createElement("div");
+          b.className = "behind";
+          const img = document.createElement("img");
+          img.src = behind;
+          img.alt = "";
+          b.append(img);
+          wrap.append(b);
+          behind_els.push(b);
+        }
+      }
+
+      icons.append(wrap16, wrap24);
 
       const label = document.createElement("div");
       label.className = "label";
@@ -117,37 +159,83 @@
       tile.append(icons, label);
       grid.append(tile);
 
-      const anims = [mount16, mount24].map((mount) => {
-        const anim = lottie.loadAnimation({
-          container: mount,
-          renderer: "svg",
-          loop: true,
-          autoplay: false,
-          path: `${file}.json`,
-        });
-        anim.addEventListener("DOMLoaded", () => anim.goToAndStop(0, true));
-        const maybeReset = () => {
-          if (anim._finishOnLoop) {
-            anim._finishOnLoop = false;
-            anim.goToAndStop(0, true);
-          }
-        };
-        anim.addEventListener("loopComplete", maybeReset);
-        anim.addEventListener("complete", maybeReset);
-        return anim;
-      });
+      const loop_file = typeof entry === "object" ? entry.loop_file : null;
 
-      tile.addEventListener("mouseenter", () => {
-        anims.forEach((a) => {
-          a._finishOnLoop = false;
-          a.play();
+      if (loop_file) {
+        [[mount16, behind_els[0]], [mount24, behind_els[1]]].forEach(([mount, behindEl]) => {
+          let anim = null;
+
+          const startLoop = () => {
+            if (anim) anim.destroy();
+            if (behindEl) behindEl.classList.remove("show");
+            anim = lottie.loadAnimation({
+              container: mount,
+              renderer: "svg",
+              loop: false,
+              autoplay: true,
+              path: `${loop_file}.json`,
+            });
+            anim.addEventListener("complete", () => startOneshot());
+          };
+
+          const startOneshot = () => {
+            if (anim) anim.destroy();
+            anim = lottie.loadAnimation({
+              container: mount,
+              renderer: "svg",
+              loop: false,
+              autoplay: true,
+              path: `${file}.json`,
+            });
+            const grow_delay = 200;
+            setTimeout(() => {
+              if (behindEl) behindEl.classList.add("show");
+            }, grow_delay);
+            anim.addEventListener("DOMLoaded", () => {
+              const duration_ms = anim.getDuration() * 1000;
+              const shrink_before = 1100;
+              setTimeout(() => {
+                if (behindEl) behindEl.classList.remove("show");
+              }, Math.max(0, duration_ms - shrink_before));
+            });
+            anim.addEventListener("complete", () => startLoop());
+          };
+
+          startLoop();
         });
-      });
-      tile.addEventListener("mouseleave", () => {
-        anims.forEach((a) => {
-          a._finishOnLoop = true;
+      } else {
+        const anims = [mount16, mount24].map((mount) => {
+          const anim = lottie.loadAnimation({
+            container: mount,
+            renderer: "svg",
+            loop: true,
+            autoplay: false,
+            path: `${file}.json`,
+          });
+          anim.addEventListener("DOMLoaded", () => anim.goToAndStop(0, true));
+          const maybeReset = () => {
+            if (anim._finishOnLoop) {
+              anim._finishOnLoop = false;
+              anim.goToAndStop(0, true);
+            }
+          };
+          anim.addEventListener("loopComplete", maybeReset);
+          anim.addEventListener("complete", maybeReset);
+          return anim;
         });
-      });
+
+        tile.addEventListener("mouseenter", () => {
+          anims.forEach((a) => {
+            a._finishOnLoop = false;
+            a.play();
+          });
+        });
+        tile.addEventListener("mouseleave", () => {
+          anims.forEach((a) => {
+            a._finishOnLoop = true;
+          });
+        });
+      }
     }
   </script>
 </body>
