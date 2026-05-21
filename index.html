@@ -50,7 +50,25 @@
     }
     .icon-16 { width: 16px; height: 16px; display: block; position: relative; }
     .icon-24 { width: 24px; height: 24px; display: block; position: relative; }
+    .icon-16.overflow, .icon-24.overflow { overflow: visible; }
     .lottie-mount { position: absolute; inset: 0; z-index: 1; }
+    .lottie-mount.scaled {
+      inset: auto;
+      left: 50%;
+      bottom: -25%;
+      width: 210%;
+      height: 210%;
+      transform: translateX(-50%);
+    }
+    .on-top {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
     .behind {
       position: absolute;
       inset: 0;
@@ -91,6 +109,7 @@
     const SECTIONS = {
       "grid-good": [
         { file: "fire", loop_file: "fireloop", behind: "4.svg" },
+        { file: "newFire", on_top: "UserProfile.png", scale: 1.2, always_loop: true },
         "roulette",
         "wheel",
         "blitz",
@@ -115,7 +134,7 @@
     );
 
     for (const [grid, entry] of all_entries) {
-      const label_text = typeof entry === "string" ? entry : entry.label;
+      const label_text = typeof entry === "string" ? entry : (entry.label || entry.file);
       const file = typeof entry === "string" ? entry : entry.file;
       const tile = document.createElement("div");
       tile.className = "tile";
@@ -123,16 +142,19 @@
       const icons = document.createElement("div");
       icons.className = "icons";
 
+      const on_top = typeof entry === "object" ? entry.on_top : null;
+      const scaled = on_top || (typeof entry === "object" && entry.scale);
+
       const wrap16 = document.createElement("div");
-      wrap16.className = "icon-16";
+      wrap16.className = "icon-16" + (scaled ? " overflow" : "");
       const mount16 = document.createElement("div");
-      mount16.className = "lottie-mount";
+      mount16.className = "lottie-mount" + (scaled ? " scaled" : "");
       wrap16.append(mount16);
 
       const wrap24 = document.createElement("div");
-      wrap24.className = "icon-24";
+      wrap24.className = "icon-24" + (scaled ? " overflow" : "");
       const mount24 = document.createElement("div");
-      mount24.className = "lottie-mount";
+      mount24.className = "lottie-mount" + (scaled ? " scaled" : "");
       wrap24.append(mount24);
 
       const behind = typeof entry === "object" ? entry.behind : null;
@@ -150,6 +172,16 @@
         }
       }
 
+      if (on_top) {
+        for (const wrap of [wrap16, wrap24]) {
+          const img = document.createElement("img");
+          img.className = "on-top";
+          img.src = on_top;
+          img.alt = "";
+          wrap.append(img);
+        }
+      }
+
       icons.append(wrap16, wrap24);
 
       const label = document.createElement("div");
@@ -160,8 +192,19 @@
       grid.append(tile);
 
       const loop_file = typeof entry === "object" ? entry.loop_file : null;
+      const always_loop = typeof entry === "object" ? entry.always_loop : false;
 
-      if (loop_file) {
+      if (always_loop) {
+        [mount16, mount24].forEach((mount) => {
+          lottie.loadAnimation({
+            container: mount,
+            renderer: "svg",
+            loop: true,
+            autoplay: true,
+            path: `${file}.json`,
+          });
+        });
+      } else if (loop_file) {
         [[mount16, behind_els[0]], [mount24, behind_els[1]]].forEach(([mount, behindEl]) => {
           let anim = null;
 
