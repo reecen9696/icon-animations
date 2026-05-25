@@ -116,12 +116,12 @@
         "diamonds",
         "baccarat",
         "mines",
+        "keno",
       ],
       "grid-main": [
         "blackjack",
         "dice",
         { label: "advanced dice", file: "dice" },
-        "keno",
       ],
       "grid-wip": [
         "plinko",
@@ -132,6 +132,37 @@
     const all_entries = Object.entries(SECTIONS).flatMap(([id, items]) =>
       items.map((entry) => [document.getElementById(id), entry])
     );
+
+    function triggerDownload(svgText, name) {
+      const blob = new Blob([svgText], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${name}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Force any <svg> markup to a clean 16x16 icon.
+    function normalizeTo16(svgText) {
+      const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+      const svg = doc.querySelector("svg");
+      svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+      svg.setAttribute("width", "16");
+      svg.setAttribute("height", "16");
+      svg.removeAttribute("style"); // drop lottie's inline transform/sizing
+      return '<?xml version="1.0" encoding="UTF-8"?>\n' + svg.outerHTML;
+    }
+
+    // Download the clean frame-0 SVG (from svg/), falling back to the live render.
+    async function downloadSvg16(file, name, liveSvgEl) {
+      try {
+        const res = await fetch(`svg/${file}.svg`);
+        if (res.ok) return triggerDownload(normalizeTo16(await res.text()), name);
+      } catch (_) { /* fall through to live capture */ }
+      if (liveSvgEl) triggerDownload(normalizeTo16(liveSvgEl.outerHTML), name);
+    }
 
     for (const [grid, entry] of all_entries) {
       const label_text = typeof entry === "string" ? entry : (entry.label || entry.file);
@@ -190,6 +221,11 @@
 
       tile.append(icons, label);
       grid.append(tile);
+
+      tile.title = "Click to download 16×16 SVG";
+      tile.addEventListener("click", () => {
+        downloadSvg16(file, label_text, wrap24.querySelector("svg"));
+      });
 
       const loop_file = typeof entry === "object" ? entry.loop_file : null;
       const always_loop = typeof entry === "object" ? entry.always_loop : false;
